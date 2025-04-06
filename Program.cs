@@ -86,6 +86,26 @@ class Program
 
     }
 
+
+    private async Task OnDisconnected (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Bot disconnected! Reason: {ex?.Message ?? "Unknown"}");
+
+        //wait 5 seconds
+        await Task.Delay(5000);
+
+        try
+        {
+            await _client.StartAsync(); //this trys to reconnect the bot 
+            Console.WriteLine("Attempted to reconnect.");
+        }
+
+        catch (Exception reconnectEx)
+        {
+            Console.WriteLine($"❌ Reconnect failed: {reconnectEx.Message}");
+        }
+    }
+
     //this handles the commands that users tpye. the bot scans to see if what was type starts with any of these slash commands. If it does then the code is carried out
     private async Task HandleMessage(SocketMessage message)
     {
