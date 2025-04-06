@@ -74,6 +74,9 @@ This project is for learning and demonstration purposes. You are free to modify 
 
 ---
 
+Added OnDisconnedted Method in case internet or discord takes down bot. The bot will try to reconnect in 5 seconds. (Date Added 04-05-2025)
+
+
 Made with ☕ and C# by [Evin B]
 
 
