@@ -9,7 +9,10 @@ A simple Discord bot built with C# and Discord.Net that remembers users' birthda
 - `/birthday MM-DD` — Save your birthday (e.g., `/birthday 04-03`)
 - `/mybirthday` — Check your saved birthday
 - `/removebirthday` — Delete your birthday from the list
+- `/listMM` - Lists the birthdays for that month
 - 🎂 Automatically announces birthdays at 9:00 AM every day in a specified Discord channel
+- Includes an auto-reconnect if the bot gets disconnected
+- Includes a "heartbeat" that pings the discord API so that the bot does not go idle.
 
 ---
 
