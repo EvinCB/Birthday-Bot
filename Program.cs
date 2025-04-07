@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using DotNetEnv;
+using System.Globalization;
 
 class Program
 {
@@ -32,7 +33,8 @@ class Program
             GatewayIntents = GatewayIntents.Guilds |
                              GatewayIntents.GuildMessages |
                              GatewayIntents.MessageContent |
-                             GatewayIntents.GuildMembers
+                             GatewayIntents.GuildMembers,
+            AlwaysDownloadUsers = true  //this makes sure the bot has access to the users data and not just users it had recently interacted with
         };
 
 
@@ -80,9 +82,8 @@ class Program
     {
         Console.WriteLine($"✅ Bot is connected! Logged in as {_client.CurrentUser}");
         _ = StartDailyBirthdayCheck();
+        _ = StartHeartbeatPing();
         return Task.CompletedTask;
-
-
 
     }
 
@@ -103,6 +104,26 @@ class Program
         catch (Exception reconnectEx)
         {
             Console.WriteLine($"❌ Reconnect failed: {reconnectEx.Message}");
+        }
+    }
+
+    //pings discords api to keep from idling
+    private async Task StartHeartbeatPing()
+    {
+        while (true)
+        {
+            try
+            {
+                // Latency is a simple ping that touches Discord’s gateway
+                Console.WriteLine($"📶 Heartbeat ping: {_client.Latency} ms");
+
+                // Wait 10 minutes (or less if you want it more active)
+                await Task.Delay(TimeSpan.FromMinutes(10));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"💥 Heartbeat error: {ex.Message}");
+            }
         }
     }
 
@@ -160,6 +181,45 @@ class Program
             else
             {
                 await message.Channel.SendMessageAsync($"⚠️ {message.Author.Username}, you don’t have a birthday saved yet. Use `/birthday MM-DD` to set it!");
+            }
+        }
+
+        else if (message.Content.StartsWith("/list"))
+        {
+            string[] parts = message.Content.Split(' ');
+
+            if (parts.Length == 2 && Regex.IsMatch(parts[1], @"^\d{2}$"))
+            {
+                string month = parts[1].Trim(); // ensures clean month input like "06"
+                var matchingBirthdays = new List<string>();
+
+                foreach (var kvp in _birthdays)
+                {
+                    string birthday = kvp.Value;
+                    if (birthday.Substring(0, 2) == month)
+                    {
+                        SocketUser user = _client.GetUser(ulong.Parse(kvp.Key));
+                        if (user != null)
+                        {
+                            matchingBirthdays.Add($"{user.Username} - {birthday}");
+                        }
+                    }
+                }
+
+                if (matchingBirthdays.Count > 0)
+                {
+                    string monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(int.Parse(month));
+                    string response = $"🎂 **Birthdays in {monthName}:**\n" + string.Join("\n", matchingBirthdays);
+                    await message.Channel.SendMessageAsync(response);
+                }
+                else
+                {
+                    await message.Channel.SendMessageAsync($"❌ No birthdays found for month {month}.");
+                }
+            }
+            else
+            {
+                await message.Channel.SendMessageAsync("❌ Please use `/list MM` format (e.g. `/list 06` for June).");
             }
         }
     }
